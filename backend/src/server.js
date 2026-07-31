@@ -94,7 +94,8 @@ app.post("/api/payments/create", async (req, res) => {
       note: `LAD Society ${orderId}`,
       mode: "fixed",
     });
-
+console.log("UPI URI:", qr.upiUri);
+console.log("QR RESULT:", qr);
     const payment = {
       _id: crypto.randomUUID(),
       billId: bill._id,
