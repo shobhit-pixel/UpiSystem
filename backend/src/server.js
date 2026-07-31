@@ -19,8 +19,8 @@ const bills = [
   {
     _id: "test-1",
     billNumber: "LAD-TEST-001",
-    title: "₹1 UPI Integration Test",
-    amount: 1,
+    title: "₹5 UPI Integration Test",
+    amount: 5,
     status: "pending",
     dueDate: "2026-08-10",
   },
