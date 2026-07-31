@@ -1,7 +1,181 @@
-import React,{useEffect,useState}from"react";const A="http://localhost:5000/api";const money=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR"}).format(n);
-async function api(p,o={}){const r=await fetch(A+p,{headers:{"Content-Type":"application/json"},...o}),d=await r.json();if(!r.ok)throw Error(d.message||"Request failed");return d}
-export default function App(){const[bills,setBills]=useState([]),[cfg,setCfg]=useState({}),[co,setCo]=useState(null),[msg,setMsg]=useState("");
-const load=async()=>{setBills(await api("/bills"));setCfg(await api("/config"))};useEffect(()=>{load().catch(e=>setMsg(e.message))},[]);
-async function pay(b){try{setMsg("");const d=await api("/payments/create",{method:"POST",body:JSON.stringify({billId:b._id})});if(d.checkout.type==="psp"){location.href=d.checkout.paymentUrl;return}setCo({...d,bill:b})}catch(e){setMsg(e.message)}}
-async function verify(){try{const d=await api(`/payments/${co.payment.orderId}/verify`,{method:"POST"});setMsg(`Status: ${d.payment.status}`);setCo(null);load()}catch(e){setMsg(e.message)}}
-return <main><header><div><small>LAD SOCIETY · UPIPAY POC</small><h1>Resident Payments</h1><p>Test before merging into the main project</p></div><b>{cfg.mode?.toUpperCase()} MODE</b></header>{msg&&<div className="notice">{msg}</div>}<section className="hero"><h2>UPI Payment Test</h2><p>{cfg.automaticVerification?"Automatic PSP verification enabled":"Real QR payment; verification is manual in QR mode"}</p></section><div className="grid">{bills.map(b=><article key={b._id}><div><small>{b.billNumber}</small><i>{b.status}</i></div><h3>{b.title}</h3><strong>{money(b.amount)}</strong>{b.status==="pending"?<button onClick={()=>pay(b)}>{b.amount===1?"Pay ₹1 Test":"Pay Now"}</button>:<span className="done">✓ Paid</span>}</article>)}</div>{co&&<div className="overlay"><section className="modal"><small>REAL UPI QR</small><h2>{co.bill.title}</h2><strong>{money(co.bill.amount)}</strong><img src={co.checkout.qrImage}/><p>Scan with PhonePe, GPay, Paytm or BHIM. Payment goes to the VPA in backend/.env.</p><a href={co.checkout.upiUri}>Open UPI App</a><button className="light" onClick={verify}>Check Payment Status</button><button className="light" onClick={()=>setCo(null)}>Close</button><small>QR-only mode cannot automatically confirm bank payment.</small></section></div>}</main>}
+import React, { useEffect, useState } from "react";
+
+const A =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+const money = (n) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+  }).format(n);
+
+async function api(p, o = {}) {
+  const r = await fetch(A + p, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    ...o,
+  });
+
+  const d = await r.json();
+
+  if (!r.ok) {
+    throw Error(d.message || "Request failed");
+  }
+
+  return d;
+}
+
+export default function App() {
+  const [bills, setBills] = useState([]);
+  const [cfg, setCfg] = useState({});
+  const [co, setCo] = useState(null);
+  const [msg, setMsg] = useState("");
+
+  const load = async () => {
+    setBills(await api("/bills"));
+    setCfg(await api("/config"));
+  };
+
+  useEffect(() => {
+    load().catch((e) => setMsg(e.message));
+  }, []);
+
+  async function pay(b) {
+    try {
+      setMsg("");
+
+      const d = await api("/payments/create", {
+        method: "POST",
+        body: JSON.stringify({
+          billId: b._id,
+        }),
+      });
+
+      if (d.checkout.type === "psp") {
+        window.location.href = d.checkout.paymentUrl;
+        return;
+      }
+
+      setCo({
+        ...d,
+        bill: b,
+      });
+    } catch (e) {
+      setMsg(e.message);
+    }
+  }
+
+  async function verify() {
+    try {
+      const d = await api(
+        `/payments/${co.payment.orderId}/verify`,
+        {
+          method: "POST",
+        }
+      );
+
+      setMsg(`Status: ${d.payment.status}`);
+      setCo(null);
+
+      await load();
+    } catch (e) {
+      setMsg(e.message);
+    }
+  }
+
+  return (
+    <main>
+      <header>
+        <div>
+          <small>LAD SOCIETY · UPIPAY POC</small>
+
+          <h1>Resident Payments</h1>
+
+          <p>Test before merging into the main project</p>
+        </div>
+
+        <b>{cfg.mode?.toUpperCase()} MODE</b>
+      </header>
+
+      {msg && <div className="notice">{msg}</div>}
+
+      <section className="hero">
+        <h2>UPI Payment Test</h2>
+
+        <p>
+          {cfg.automaticVerification
+            ? "Automatic PSP verification enabled"
+            : "Real QR payment; verification is manual in QR mode"}
+        </p>
+      </section>
+
+      <div className="grid">
+        {bills.map((b) => (
+          <article key={b._id}>
+            <div>
+              <small>{b.billNumber}</small>
+              <i>{b.status}</i>
+            </div>
+
+            <h3>{b.title}</h3>
+
+            <strong>{money(b.amount)}</strong>
+
+            {b.status === "pending" ? (
+              <button onClick={() => pay(b)}>
+                {b.amount === 1 ? "Pay ₹1 Test" : "Pay Now"}
+              </button>
+            ) : (
+              <span className="done">✓ Paid</span>
+            )}
+          </article>
+        ))}
+      </div>
+
+      {co && (
+        <div className="overlay">
+          <section className="modal">
+            <small>REAL UPI QR</small>
+
+            <h2>{co.bill.title}</h2>
+
+            <strong>{money(co.bill.amount)}</strong>
+
+            <img
+              src={co.checkout.qrImage}
+              alt={`UPI QR for ${co.bill.title}`}
+            />
+
+            <p>
+              Scan with PhonePe, GPay, Paytm or BHIM. Payment goes
+              to the configured UPI VPA.
+            </p>
+
+            <a href={co.checkout.upiUri}>
+              Open UPI App
+            </a>
+
+            <button
+              className="light"
+              onClick={verify}
+            >
+              Check Payment Status
+            </button>
+
+            <button
+              className="light"
+              onClick={() => setCo(null)}
+            >
+              Close
+            </button>
+
+            <small>
+              QR-only mode cannot automatically confirm bank payment.
+            </small>
+          </section>
+        </div>
+      )}
+    </main>
+  );
+}
